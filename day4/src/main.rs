@@ -93,7 +93,7 @@ fn part2() -> u32 {
         if boards.len() == 1 && boards.first().unwrap().won == true {
             return wn * boards.first().unwrap().score();
         } else {
-            boards = boards.into_iter().filter(|b| b.won == false).collect();
+            boards.retain(|b| b.won == false);
         }
     }
 
