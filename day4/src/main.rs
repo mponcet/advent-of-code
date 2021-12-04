@@ -12,11 +12,11 @@ struct BingoBoard {
 
 impl BingoBoard {
     fn check_number(&mut self, number: u32) {
-        for n in self.grid.iter_mut().flatten() {
-            if n.number == number {
-                n.checked = true;
-            }
-        }
+        self.grid
+            .iter_mut()
+            .flatten()
+            .filter(|n| n.number == number)
+            .for_each(|n| n.checked = true);
     }
 
     fn wins(&self) -> bool {
@@ -48,19 +48,20 @@ fn parse_input(input: &str) -> (Vec<u32>, Vec<BingoBoard>) {
         .map(|n| n.parse::<u32>().unwrap())
         .collect();
 
-    let mut boards: Vec<BingoBoard> = Vec::new();
-    for line in lines {
-        let mut grid: [[BingoNumber; 5]; 5] = Default::default();
+    let boards = lines
+        .map(|l| {
+            let mut grid: [[BingoNumber; 5]; 5] = Default::default();
 
-        line.split_whitespace().enumerate().for_each(|(idx, val)| {
-            grid[idx / 5][idx % 5] = BingoNumber {
-                number: val.parse::<u32>().unwrap(),
-                checked: false,
-            }
-        });
+            l.split_whitespace().enumerate().for_each(|(idx, val)| {
+                grid[idx / 5][idx % 5] = BingoNumber {
+                    number: val.parse::<u32>().unwrap(),
+                    checked: false,
+                }
+            });
 
-        boards.push(BingoBoard { grid, won: false });
-    }
+            BingoBoard { grid, won: false }
+        })
+        .collect();
 
     (winning_numbers, boards)
 }
@@ -85,9 +86,9 @@ fn part2() -> u32 {
     let input = include_str!("../input.txt");
     let (winning_numbers, mut boards) = parse_input(&input);
 
-    for wn in &winning_numbers {
+    for wn in winning_numbers {
         for board in boards.iter_mut() {
-            board.check_number(*wn);
+            board.check_number(wn);
 
             if board.wins() {
                 board.won = true;
