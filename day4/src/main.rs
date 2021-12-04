@@ -20,10 +20,13 @@ impl BingoBoard {
     }
 
     fn wins(&self) -> bool {
-        self.grid
-            .iter()
-            .any(|row| row.iter().all(|n| n.checked == true))
-            || (0..5).any(|col| self.grid[..][col].iter().all(|n| n.checked == true))
+        let row_bingo = |grid: &[[BingoNumber; 5]; 5]| -> bool {
+            grid.iter().any(|row| row.iter().all(|n| n.checked == true))
+        };
+        let column_bingo = |grid: &[[BingoNumber; 5]; 5]| -> bool {
+            (0..5).any(|col| grid[..][col].iter().all(|n| n.checked == true))
+        };
+        row_bingo(&self.grid) || column_bingo(&self.grid)
     }
 
     fn score(&self) -> u32 {
