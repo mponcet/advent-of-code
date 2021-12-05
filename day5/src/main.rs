@@ -21,6 +21,13 @@ struct Line {
     b: Point,
 }
 
+struct LineIter {
+    curr: Option<Point>,
+    end: Point,
+    dx: i32,
+    dy: i32,
+}
+
 impl Line {
     fn is_horizontal(&self) -> bool {
         self.a.x == self.b.x
@@ -33,35 +40,13 @@ impl Line {
     fn is_diagonal(&self) -> bool {
         (self.a.x - self.b.x).abs() == (self.a.y - self.b.y).abs()
     }
-}
 
-struct LineIter {
-    curr: Option<Point>,
-    last: Point,
-    dx: i32,
-    dy: i32,
-}
-
-impl IntoIterator for Line {
-    type Item = Point;
-    type IntoIter = LineIter;
-
-    fn into_iter(self) -> Self::IntoIter {
-        let dx = (self.a.x - self.b.x)
-            .abs()
-            .checked_div(self.b.x - self.a.x)
-            .unwrap_or(0);
-
-        let dy = (self.a.y - self.b.y)
-            .abs()
-            .checked_div(self.b.y - self.a.y)
-            .unwrap_or(0);
-
+    fn points(self) -> LineIter {
         LineIter {
             curr: Some(self.a),
-            last: self.b,
-            dx,
-            dy,
+            end: self.b,
+            dx: (self.b.x - self.a.x).signum(),
+            dy: (self.b.y - self.a.y).signum(),
         }
     }
 }
@@ -70,18 +55,15 @@ impl Iterator for LineIter {
     type Item = Point;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(curr) = self.curr {
-            if curr == self.last {
-                self.curr.take()
-            } else {
-                self.curr = Some(Point {
-                    x: curr.x + self.dx,
-                    y: curr.y + self.dy,
-                });
-                Some(curr)
-            }
+        let curr = self.curr?;
+
+        if curr == self.end {
+            self.curr.take()
         } else {
-            None
+            self.curr.replace(Point {
+                x: curr.x + self.dx,
+                y: curr.y + self.dy,
+            })
         }
     }
 }
@@ -110,7 +92,7 @@ fn part1(filter_diagonal: bool) -> u32 {
 
     for line in lines {
         if line.is_horizontal() || line.is_vertical() || (filter_diagonal && line.is_diagonal()) {
-            for p in line {
+            for p in line.points() {
                 let counter = map.entry(p).or_insert(0);
                 *counter += 1;
 
