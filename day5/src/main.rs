@@ -1,10 +1,18 @@
 use regex::Regex;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct Point {
     x: i32,
     y: i32,
+}
+
+impl Hash for Point {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.x.hash(state);
+        self.y.hash(state);
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -103,7 +111,7 @@ fn part1(filter_diagonal: bool) -> u32 {
     for line in lines {
         if line.is_horizontal() || line.is_vertical() || (filter_diagonal && line.is_diagonal()) {
             for p in line {
-                let counter = map.entry((p.x, p.y)).or_insert(0);
+                let counter = map.entry(p).or_insert(0);
                 *counter += 1;
 
                 if *counter == 2 {
