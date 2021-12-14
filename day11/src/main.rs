@@ -1,4 +1,3 @@
-const STEPS: usize = 100;
 const GRID_SIZE: usize = 10;
 
 fn parse_input() -> Vec<Vec<u8>> {
@@ -23,58 +22,49 @@ fn neighbors(i: usize, j: usize) -> impl Iterator<Item = (usize, usize)> {
     .filter(|&(i, j)| i < GRID_SIZE && j < GRID_SIZE)
 }
 
-fn flash(grid: &mut [Vec<u8>], i: usize, j: usize) -> u32 {
-    let mut count = 0;
+fn flash(grid: &mut [Vec<u8>], i: usize, j: usize) -> usize {
+    let mut count = 1;
 
+    grid[i][j] = 0;
     for (ni, nj) in neighbors(i, j) {
-        grid[ni][nj] += 1;
-        if grid[ni][nj] == 10 {
-            count += 1 + flash(grid, ni, nj);
-        }
-    }
-
-    count
-}
-
-fn octopuses_run(steps: usize) -> u32 {
-    let mut count = 0;
-    let mut grid = parse_input();
-
-    for step in 0..steps {
-        if grid.iter().flatten().all(|p| *p == 0) {
-            return step as u32;
-        }
-
-        grid.iter_mut().flatten().for_each(|p| *p += 1);
-
-        let mut will_flash: Vec<(usize, usize)> = Vec::new();
-        for i in 0..GRID_SIZE {
-            for j in 0..GRID_SIZE {
-                if grid[i][j] > 9 {
-                    will_flash.push((i, j));
-                    count += 1;
-                }
+        if grid[ni][nj] > 0 {
+            grid[ni][nj] += 1;
+            if grid[ni][nj] >= 10 {
+                count += flash(grid, ni, nj);
             }
         }
-        for (i, j) in will_flash {
-            count += flash(&mut grid, i, j);
-        }
-
-        grid.iter_mut()
-            .flatten()
-            .filter(|p| **p > 9)
-            .for_each(|p| *p = 0);
     }
 
     count
 }
 
-fn part1() -> u32 {
-    octopuses_run(STEPS)
+fn octopuses_step(grid: &mut [Vec<u8>]) -> usize {
+    let mut count = 0;
+
+    grid.iter_mut().flatten().for_each(|p| *p += 1);
+
+    for i in 0..GRID_SIZE {
+        for j in 0..GRID_SIZE {
+            if grid[i][j] >= 10 {
+                count += flash(grid, i, j);
+            }
+        }
+    }
+
+    count
 }
 
-fn part2() -> u32 {
-    octopuses_run(usize::MAX)
+fn part1() -> usize {
+    let mut grid = parse_input();
+    (0..100).map(|_| octopuses_step(&mut grid)).sum()
+}
+
+fn part2() -> usize {
+    let mut grid = parse_input();
+    (0..)
+        .find(|_| octopuses_step(&mut grid) == GRID_SIZE * GRID_SIZE)
+        .map(|step| step + 1)
+        .expect("Couldn't find step")
 }
 
 fn main() {}
