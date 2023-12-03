@@ -51,7 +51,7 @@ fn number_len(number: usize) -> usize {
     (number.checked_ilog10().unwrap_or(0) + 1) as usize
 }
 
-fn number_adj_with_symbol(grid: &Grid, i: usize, j: usize) -> Option<usize> {
+fn number_with_adj_symbol(grid: &Grid, i: usize, j: usize) -> Option<usize> {
     let mut x = i;
     let mut has_neighbor_symbol = false;
 
@@ -61,14 +61,13 @@ fn number_adj_with_symbol(grid: &Grid, i: usize, j: usize) -> Option<usize> {
                 .neighbors(x, j)
                 .map(|(i, j)| grid.get(i, j))
                 .any(is_symbol);
-
         x += 1;
     }
 
     if has_neighbor_symbol {
-        let number = (i..x).rev().fold(0, |acc, i| {
-            acc + (grid.get(i, j) - b'0') as usize * 10usize.pow((x - i - 1) as u32)
-        });
+        let number = unsafe { std::str::from_utf8_unchecked(&grid.0[j][i..x]) }
+            .parse()
+            .unwrap();
         Some(number)
     } else {
         None
@@ -82,7 +81,7 @@ fn get_parts(grid: &Grid) -> Vec<Part> {
         let mut i = 0;
         while i < grid.max_i() {
             if grid.get(i, j).is_ascii_digit() {
-                if let Some(number) = number_adj_with_symbol(grid, i, j) {
+                if let Some(number) = number_with_adj_symbol(grid, i, j) {
                     parts.push(Part { number, i, j });
                     i += number_len(number);
                 } else {
