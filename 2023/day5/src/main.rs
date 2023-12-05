@@ -7,16 +7,6 @@ struct RangeMap {
     len: usize,
 }
 
-fn ranges_map(ranges: &[RangeMap], n: usize) -> usize {
-    for range in ranges {
-        if n >= range.src && n < range.src + range.len {
-            return range.dst + (n - range.src);
-        }
-    }
-
-    n
-}
-
 #[derive(Debug, Default)]
 struct Game {
     seeds: Vec<usize>,
@@ -27,6 +17,33 @@ struct Game {
     light_to_temperature: Vec<RangeMap>,
     temperature_to_humidity: Vec<RangeMap>,
     humidity_to_location: Vec<RangeMap>,
+}
+
+impl Game {
+    fn seed_to_location(&self, seed: usize) -> usize {
+        let pipeline = [
+            &self.seed_to_soil,
+            &self.soil_to_fertilizer,
+            &self.fertilizer_to_water,
+            &self.water_to_light,
+            &self.light_to_temperature,
+            &self.temperature_to_humidity,
+            &self.humidity_to_location,
+        ];
+
+        pipeline.iter().fold(seed, |n, ranges| {
+            ranges
+                .iter()
+                .find_map(|range| {
+                    if n >= range.src && n < range.src + range.len {
+                        Some(range.dst + (n - range.src))
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(n)
+        })
+    }
 }
 
 fn parse(input: &str) -> Game {
@@ -76,39 +93,15 @@ fn parse(input: &str) -> Game {
 fn part1(input: &str) -> usize {
     let game = parse(input);
 
-    let pipeline = [
-        &game.seed_to_soil,
-        &game.soil_to_fertilizer,
-        &game.fertilizer_to_water,
-        &game.water_to_light,
-        &game.light_to_temperature,
-        &game.temperature_to_humidity,
-        &game.humidity_to_location,
-    ];
-
     game.seeds
-        .into_iter()
-        .map(|seed| {
-            pipeline
-                .iter()
-                .fold(seed, |location, ranges| ranges_map(ranges, location))
-        })
+        .iter()
+        .map(|&seed| game.seed_to_location(seed))
         .min()
         .unwrap()
 }
 
 fn part2(input: &str) -> usize {
     let game = parse(input);
-
-    let pipeline = [
-        &game.seed_to_soil,
-        &game.soil_to_fertilizer,
-        &game.fertilizer_to_water,
-        &game.water_to_light,
-        &game.light_to_temperature,
-        &game.temperature_to_humidity,
-        &game.humidity_to_location,
-    ];
 
     game.seeds
         .chunks_exact(2)
@@ -118,11 +111,7 @@ fn part2(input: &str) -> usize {
         })
         .map(|seed| {
             seed.into_par_iter()
-                .map(|seed| {
-                    pipeline
-                        .iter()
-                        .fold(seed, |location, ranges| ranges_map(ranges, location))
-                })
+                .map(|seed| game.seed_to_location(seed))
                 .min()
                 .unwrap()
         })
