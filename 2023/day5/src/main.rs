@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 #[derive(Debug, Default)]
 struct RangeMap {
     dst: usize,
@@ -110,14 +112,19 @@ fn part2(input: &str) -> usize {
 
     game.seeds
         .chunks_exact(2)
-        .flat_map(|chunk| match chunk {
+        .map(|chunk| match chunk {
             &[seed_start, len] => seed_start..seed_start + len,
             _ => panic!("wtf"),
         })
         .map(|seed| {
-            pipeline
-                .iter()
-                .fold(seed, |location, ranges| ranges_map(ranges, location))
+            seed.into_par_iter()
+                .map(|seed| {
+                    pipeline
+                        .iter()
+                        .fold(seed, |location, ranges| ranges_map(ranges, location))
+                })
+                .min()
+                .unwrap()
         })
         .min()
         .unwrap()
