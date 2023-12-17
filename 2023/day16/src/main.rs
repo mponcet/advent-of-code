@@ -1,5 +1,5 @@
 use rayon::prelude::*;
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 #[derive(Debug)]
 struct Grid {
@@ -39,7 +39,7 @@ fn parse(input: &str) -> Grid {
 }
 
 // Up => j + 1, Down => j - 1
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
     Up,
     Down,
@@ -49,68 +49,61 @@ enum Direction {
 
 fn dfs(
     grid: &Grid,
-    visited: &mut HashMap<(usize, usize), usize>,
+    visited: &mut HashSet<((usize, usize), Direction)>,
     i: isize,
     j: isize,
     direction: Direction,
-    count: usize,
 ) {
-    // if i >= grid.columns as isize || j >= grid.rows as isize || i < 0 || j < 0 {
-    //     return;
-    // }
-    //
-    if count > 800 {
+    if i >= grid.columns as isize || j >= grid.rows as isize || i < 0 || j < 0 {
+        return;
+    }
+
+    if visited.contains(&((i as usize, j as usize), direction)) {
         return;
     }
 
     if let Some(c) = grid.get(i as usize, j as usize) {
-        let visit_count = visited
-            .entry((i as usize, j as usize))
-            .and_modify(|count| *count += 1)
-            .or_insert(1);
-        if *visit_count > 10000 {
-            return;
-        }
+        visited.insert(((i as usize, j as usize), direction));
 
         match direction {
             Direction::Up => match c {
-                b'.' | b'|' => dfs(grid, visited, i, j + 1, Direction::Up, count + 1),
+                b'.' | b'|' => dfs(grid, visited, i, j + 1, Direction::Up),
                 b'-' => {
-                    dfs(grid, visited, i + 1, j, Direction::Right, count + 1);
-                    dfs(grid, visited, i - 1, j, Direction::Left, count + 1);
+                    dfs(grid, visited, i + 1, j, Direction::Right);
+                    dfs(grid, visited, i - 1, j, Direction::Left);
                 }
-                b'\\' => dfs(grid, visited, i + 1, j, Direction::Right, count + 1),
-                b'/' => dfs(grid, visited, i - 1, j, Direction::Left, count + 1),
+                b'\\' => dfs(grid, visited, i + 1, j, Direction::Right),
+                b'/' => dfs(grid, visited, i - 1, j, Direction::Left),
                 _ => unreachable!(),
             },
             Direction::Down => match c {
-                b'.' | b'|' => dfs(grid, visited, i, j - 1, Direction::Down, count + 1),
+                b'.' | b'|' => dfs(grid, visited, i, j - 1, Direction::Down),
                 b'-' => {
-                    dfs(grid, visited, i + 1, j, Direction::Right, count + 1);
-                    dfs(grid, visited, i - 1, j, Direction::Left, count + 1);
+                    dfs(grid, visited, i + 1, j, Direction::Right);
+                    dfs(grid, visited, i - 1, j, Direction::Left);
                 }
-                b'\\' => dfs(grid, visited, i - 1, j, Direction::Left, count + 1),
-                b'/' => dfs(grid, visited, i + 1, j, Direction::Right, count + 1),
+                b'\\' => dfs(grid, visited, i - 1, j, Direction::Left),
+                b'/' => dfs(grid, visited, i + 1, j, Direction::Right),
                 _ => unreachable!(),
             },
             Direction::Left => match c {
-                b'.' | b'-' => dfs(grid, visited, i - 1, j, Direction::Left, count + 1),
+                b'.' | b'-' => dfs(grid, visited, i - 1, j, Direction::Left),
                 b'|' => {
-                    dfs(grid, visited, i, j + 1, Direction::Up, count + 1);
-                    dfs(grid, visited, i, j - 1, Direction::Down, count + 1);
+                    dfs(grid, visited, i, j + 1, Direction::Up);
+                    dfs(grid, visited, i, j - 1, Direction::Down);
                 }
-                b'\\' => dfs(grid, visited, i, j - 1, Direction::Down, count + 1),
-                b'/' => dfs(grid, visited, i, j + 1, Direction::Up, count + 1),
+                b'\\' => dfs(grid, visited, i, j - 1, Direction::Down),
+                b'/' => dfs(grid, visited, i, j + 1, Direction::Up),
                 _ => unreachable!(),
             },
             Direction::Right => match c {
-                b'.' | b'-' => dfs(grid, visited, i + 1, j, Direction::Right, count + 1),
+                b'.' | b'-' => dfs(grid, visited, i + 1, j, Direction::Right),
                 b'|' => {
-                    dfs(grid, visited, i, j + 1, Direction::Up, count + 1);
-                    dfs(grid, visited, i, j - 1, Direction::Down, count + 1);
+                    dfs(grid, visited, i, j + 1, Direction::Up);
+                    dfs(grid, visited, i, j - 1, Direction::Down);
                 }
-                b'\\' => dfs(grid, visited, i, j + 1, Direction::Up, count + 1),
-                b'/' => dfs(grid, visited, i, j - 1, Direction::Down, count + 1),
+                b'\\' => dfs(grid, visited, i, j + 1, Direction::Up),
+                b'/' => dfs(grid, visited, i, j - 1, Direction::Down),
                 _ => unreachable!(),
             },
         }
@@ -119,10 +112,14 @@ fn dfs(
 
 fn part1(input: &str) -> usize {
     let grid = parse(input);
-    let mut visited = HashMap::new();
+    let mut visited = HashSet::new();
 
-    dfs(&grid, &mut visited, 0, 0, Direction::Right, 0);
-    visited.len()
+    dfs(&grid, &mut visited, 0, 0, Direction::Right);
+    visited
+        .iter()
+        .map(|&(coord, _)| coord)
+        .collect::<HashSet<_>>()
+        .len()
 }
 
 fn part2(input: &str) -> usize {
@@ -143,9 +140,13 @@ fn part2(input: &str) -> usize {
         let max = (0..grid.columns)
             .into_par_iter()
             .map(|i| {
-                let mut visited = HashMap::new();
-                dfs(&grid, &mut visited, i as isize, j as isize, direction, 0);
-                visited.len()
+                let mut visited = HashSet::new();
+                dfs(&grid, &mut visited, i as isize, j as isize, direction);
+                visited
+                    .iter()
+                    .map(|&(coord, _)| coord)
+                    .collect::<HashSet<_>>()
+                    .len()
             })
             .max()
             .unwrap();
@@ -167,9 +168,13 @@ fn part2(input: &str) -> usize {
         let max = (0..grid.rows)
             .into_par_iter()
             .map(|j| {
-                let mut visited = HashMap::new();
-                dfs(&grid, &mut visited, i as isize, j as isize, direction, 0);
-                visited.len()
+                let mut visited = HashSet::new();
+                dfs(&grid, &mut visited, i as isize, j as isize, direction);
+                visited
+                    .iter()
+                    .map(|&(coord, _)| coord)
+                    .collect::<HashSet<_>>()
+                    .len()
             })
             .max()
             .unwrap();
