@@ -1,4 +1,4 @@
-use utils::Grid;
+use utils::{DiagonalDirection, Grid};
 
 fn parse(input: &str) -> Grid<char> {
     let mut columns = 0;
@@ -19,54 +19,43 @@ fn parse(input: &str) -> Grid<char> {
     }
 }
 
-fn check_xmas(grid: &Grid<char>, row: usize, col: usize) -> usize {
-    let mut nr_xmas = 0;
-
-    // horizontal
-    let s = (0..=3)
-        .filter_map(|d| grid.get(row, col + d))
-        .collect::<String>();
-    if s == "XMAS" || s == "SAMX" {
-        nr_xmas += 1;
-    }
-
-    let s = (0..=3)
-        .filter_map(|d| grid.get(row + d, col))
-        .collect::<String>();
-    if s == "XMAS" || s == "SAMX" {
-        nr_xmas += 1;
-    }
-
-    // diagonal
-    let s = (0..=3)
-        .filter_map(|d| grid.get(row + d, col + d))
-        .collect::<String>();
-    if s == "XMAS" || s == "SAMX" {
-        nr_xmas += 1;
-    }
-    let s = (0..=3)
-        .filter_map(|d| {
-            if col >= d {
-                grid.get(row + d, col - d)
-            } else {
-                None
-            }
-        })
-        .collect::<String>();
-    if s == "XMAS" || s == "SAMX" {
-        nr_xmas += 1;
-    }
-
-    nr_xmas
-}
-
 fn part1(input: &str) -> usize {
     let grid = parse(input);
     let mut nr_xmas = 0;
 
     for col in 0..grid.rows {
         for row in 0..grid.columns {
-            nr_xmas += check_xmas(&grid, row, col);
+            // horizontal
+            if let Some(row) = grid.row_slice(row, col..col + 4) {
+                let s = row.iter().collect::<String>();
+                if s == "XMAS" || s == "SAMX" {
+                    nr_xmas += 1;
+                }
+            }
+
+            // vertical
+            if let Some(col) = grid.col_slice(col, row..row + 4) {
+                let s = col.iter().collect::<String>();
+                if s == "XMAS" || s == "SAMX" {
+                    nr_xmas += 1;
+                }
+            }
+
+            // diagonal
+            if let Some(diagonal) = grid.diagonal_from(row, col, DiagonalDirection::BottomRight(4))
+            {
+                let s = diagonal.iter().collect::<String>();
+                if s == "XMAS" || s == "SAMX" {
+                    nr_xmas += 1;
+                }
+            }
+
+            if let Some(diagonal) = grid.diagonal_from(row, col, DiagonalDirection::TopRight(4)) {
+                let s = diagonal.iter().collect::<String>();
+                if s == "XMAS" || s == "SAMX" {
+                    nr_xmas += 1;
+                }
+            }
         }
     }
 
