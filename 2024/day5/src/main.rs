@@ -48,11 +48,10 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let game = parse(input);
+    let mut game = parse(input);
 
-    let mut incorrects = game
-        .updates
-        .iter()
+    game.updates
+        .iter_mut()
         .filter(|update| {
             update.iter().enumerate().any(|(i, page)| {
                 let pages_after = &update[i + 1..];
@@ -61,11 +60,6 @@ fn part2(input: &str) -> usize {
                     .any(|page_after| !game.rules.contains(&(*page, *page_after)))
             })
         })
-        .cloned()
-        .collect::<Vec<_>>();
-
-    incorrects
-        .iter_mut()
         .map(|incorrect| {
             incorrect.sort_unstable_by(|a, b| {
                 if game.rules.contains(&(*a, *b)) {
