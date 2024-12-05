@@ -1,45 +1,6 @@
-#[derive(Debug)]
-struct Grid {
-    grid: Vec<char>,
-    rows: usize,
-    columns: usize,
-}
+use utils::Grid;
 
-impl Grid {
-    fn get(&self, row: usize, col: usize) -> Option<char> {
-        if col < self.columns && row < self.rows {
-            self.grid.get(row * self.columns + col).copied()
-        } else {
-            None
-        }
-    }
-
-    #[allow(unused)]
-    fn row(&self, row: usize) -> Option<Vec<char>> {
-        if row < self.rows {
-            let start = row * self.columns;
-            let end = start + self.columns;
-            Some(self.grid[start..end].to_vec())
-        } else {
-            None
-        }
-    }
-
-    #[allow(unused)]
-    fn col(&self, col: usize) -> Option<Vec<char>> {
-        if col < self.columns {
-            Some(
-                (0..self.rows)
-                    .map(|row| self.get(row, col).expect("shouldn't go outbound"))
-                    .collect(),
-            )
-        } else {
-            None
-        }
-    }
-}
-
-fn parse(input: &str) -> Grid {
+fn parse(input: &str) -> Grid<char> {
     let mut columns = 0;
     let grid: Vec<_> = input
         .lines()
@@ -58,7 +19,7 @@ fn parse(input: &str) -> Grid {
     }
 }
 
-fn check_xmas(grid: &Grid, row: usize, col: usize) -> usize {
+fn check_xmas(grid: &Grid<char>, row: usize, col: usize) -> usize {
     let mut nr_xmas = 0;
 
     // horizontal
