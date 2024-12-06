@@ -37,6 +37,12 @@ where
         }
     }
 
+    pub fn set(&mut self, row: usize, col: usize, value: T) {
+        if col < self.columns && row < self.rows {
+            self.grid[row * self.columns + col] = value;
+        }
+    }
+
     pub fn row(&self, row: usize) -> Option<Vec<T>> {
         if row < self.rows {
             let start = row * self.columns;

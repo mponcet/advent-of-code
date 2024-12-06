@@ -7,6 +7,7 @@ struct Game {
     starting_pos: (usize, usize),
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
     Top,
     Right,
@@ -40,13 +41,18 @@ fn parse(input: &str) -> Game {
     Game { grid, starting_pos }
 }
 
-fn part1(input: &str) -> usize {
-    let game = parse(input);
+enum Solution {
+    Visited(HashSet<(usize, usize)>),
+    Loop(bool),
+}
 
+fn visit(game: &Game, detect_loop: bool) -> Solution {
     let mut direction = Direction::Top;
-    let (grid, (mut row, mut col)) = (game.grid, (game.starting_pos));
+    let grid = &game.grid;
+    let (mut row, mut col) = game.starting_pos;
 
     let mut visited = HashSet::from([game.starting_pos]);
+    let mut visit_direction = HashSet::from([(game.starting_pos, direction)]);
     loop {
         let (next_row, next_col) = match direction {
             Direction::Top if row >= 1 => (row - 1, col),
@@ -63,22 +69,59 @@ fn part1(input: &str) -> usize {
                     Direction::Right => Direction::Bottom,
                     Direction::Bottom => Direction::Left,
                     Direction::Left => Direction::Top,
+                };
+                if detect_loop {
+                    if visit_direction.contains(&((row, col), direction)) {
+                        return Solution::Loop(true);
+                    }
+                    visit_direction.insert(((row, col), direction));
                 }
             }
             Some('.' | '^') => {
                 row = next_row;
                 col = next_col;
-                visited.insert((row, col));
+                if !detect_loop {
+                    visited.insert((row, col));
+                }
             }
             _ => break,
         }
     }
 
-    visited.len()
+    if detect_loop {
+        Solution::Loop(false)
+    } else {
+        Solution::Visited(visited)
+    }
+}
+
+fn part1(input: &str) -> usize {
+    let game = parse(input);
+    if let Solution::Visited(visited) = visit(&game, false) {
+        visited.len()
+    } else {
+        unreachable!()
+    }
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let mut game = parse(input);
+    let Solution::Visited(visited) = visit(&game, false) else {
+        unreachable!()
+    };
+
+    let mut loops = 0;
+    for (row, col) in visited {
+        game.grid.set(row, col, '#');
+        if let Solution::Loop(is_loop) = visit(&game, true) {
+            if is_loop {
+                loops += 1;
+            }
+        }
+        game.grid.set(row, col, '.');
+    }
+
+    loops
 }
 
 fn main() {
@@ -89,10 +132,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_part1() {
-        let input = "....#.....
+    const INPUT: &str = "....#.....
 .........#
 ..........
 ..#.......
@@ -102,12 +142,13 @@ mod tests {
 ........#.
 #.........
 ......#...";
-        assert_eq!(part1(input), 41);
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1(INPUT), 41);
     }
 
     #[test]
     fn test_part2() {
-        let input = "";
-        assert_eq!(part2(input), 31);
+        assert_eq!(part2(INPUT), 6);
     }
 }
