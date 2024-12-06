@@ -32,9 +32,8 @@ fn parse(input: &str) -> Game {
         columns,
     };
 
-    // FIXME: move to utils
-    let starting_pos = (0..rows)
-        .flat_map(|row| (0..columns).map(move |col| (row, col)))
+    let starting_pos = grid
+        .position_iter()
         .find(|(row, col)| grid.get(*row, *col).unwrap() == '^')
         .expect("can't find the starting position");
 

@@ -147,6 +147,10 @@ where
             }
         }
     }
+
+    pub fn position_iter(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
+        (0..self.rows).flat_map(|row| (0..self.columns).map(move |col| (row, col)))
+    }
 }
 
 #[cfg(test)]
