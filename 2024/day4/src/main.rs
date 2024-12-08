@@ -5,12 +5,12 @@ fn parse(input: &str) -> Grid<char> {
     let grid: Vec<_> = input
         .lines()
         .flat_map(|l| {
-            columns = l.len();
+            columns = l.len() as i32;
             l.chars()
         })
         .collect();
 
-    let rows = grid.len() / columns;
+    let rows = grid.len() as i32 / columns;
 
     Grid {
         grid,

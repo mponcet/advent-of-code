@@ -4,7 +4,7 @@ use utils::Grid;
 
 struct Game {
     grid: Grid<char>,
-    starting_pos: (usize, usize),
+    starting_pos: (i32, i32),
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -20,11 +20,11 @@ fn parse(input: &str) -> Game {
     let grid = input
         .lines()
         .flat_map(|line| {
-            columns = line.len();
+            columns = line.len() as i32;
             line.chars()
         })
         .collect::<Vec<_>>();
-    let rows = grid.len() / columns;
+    let rows = grid.len() as i32 / columns;
 
     let grid = Grid {
         grid,
@@ -41,7 +41,7 @@ fn parse(input: &str) -> Game {
 }
 
 enum Solution {
-    Visited(HashSet<(usize, usize)>),
+    Visited(HashSet<(i32, i32)>),
     Loop(bool),
 }
 
@@ -111,13 +111,13 @@ fn part2(input: &str) -> usize {
 
     let mut loops = 0;
     for (row, col) in visited {
-        game.grid.set(row, col, '#');
+        game.grid.set(row, col, '#').unwrap();
         if let Solution::Loop(is_loop) = visit(&game, true) {
             if is_loop {
                 loops += 1;
             }
         }
-        game.grid.set(row, col, '.');
+        game.grid.set(row, col, '.').unwrap();
     }
 
     loops

@@ -5,7 +5,7 @@ use utils::Grid;
 
 struct Game {
     grid: Grid<char>,
-    antennas: HashMap<char, Vec<(usize, usize)>>,
+    antennas: HashMap<char, Vec<(i32, i32)>>,
 }
 
 fn parse(input: &str) -> Game {
@@ -13,11 +13,11 @@ fn parse(input: &str) -> Game {
     let grid = input
         .lines()
         .flat_map(|line| {
-            columns = line.len();
+            columns = line.len() as i32;
             line.chars()
         })
         .collect::<Vec<_>>();
-    let rows = grid.len() / columns;
+    let rows = grid.len() as i32 / columns;
 
     let grid = Grid {
         grid,
@@ -61,33 +61,26 @@ fn part1(input: &str) -> usize {
             let mut antinode1 = (0, 0);
             let mut antinode2 = (0, 0);
             if antenna1.0 < antenna2.0 {
-                antinode1.0 = antenna1.0 as i32 - diff_row;
-                antinode2.0 = antenna2.0 as i32 + diff_row;
+                antinode1.0 = antenna1.0 - diff_row;
+                antinode2.0 = antenna2.0 + diff_row;
             } else {
-                antinode1.0 = antenna1.0 as i32 + diff_row;
-                antinode2.0 = antenna2.0 as i32 - diff_row;
+                antinode1.0 = antenna1.0 + diff_row;
+                antinode2.0 = antenna2.0 - diff_row;
             }
 
             if antenna1.1 < antenna2.1 {
-                antinode1.1 = antenna1.1 as i32 - diff_col;
-                antinode2.1 = antenna2.1 as i32 + diff_col;
+                antinode1.1 = antenna1.1 - diff_col;
+                antinode2.1 = antenna2.1 + diff_col;
             } else {
-                antinode1.1 = antenna1.1 as i32 + diff_col;
-                antinode2.1 = antenna2.1 as i32 - diff_col;
+                antinode1.1 = antenna1.1 + diff_col;
+                antinode2.1 = antenna2.1 - diff_col;
             }
 
-            if antinode1.0 >= 0
-                && antinode1.0 < grid.rows as i32
-                && antinode1.1 >= 0
-                && antinode1.1 < grid.columns as i32
-            {
+            if grid.get(antinode1.0, antinode1.1).is_some() {
                 antinodes.insert(antinode1);
             }
-            if antinode2.0 >= 0
-                && antinode2.0 < grid.rows as i32
-                && antinode2.1 >= 0
-                && antinode2.1 < grid.columns as i32
-            {
+
+            if grid.get(antinode2.0, antinode2.1).is_some() {
                 antinodes.insert(antinode2);
             }
         }
@@ -126,13 +119,9 @@ fn part2(input: &str) -> usize {
                 vec2.1 = -diff_col;
             }
 
-            let mut antinode = (antenna1.0 as i32, antenna1.1 as i32);
+            let mut antinode = *antenna1;
             loop {
-                if antinode.0 >= 0
-                    && antinode.0 < grid.rows as i32
-                    && antinode.1 >= 0
-                    && antinode.1 < grid.columns as i32
-                {
+                if grid.get(antinode.0, antinode.1).is_some() {
                     antinodes.insert(antinode);
                 } else {
                     break;
@@ -140,13 +129,9 @@ fn part2(input: &str) -> usize {
                 antinode = (antinode.0 + vec1.0, antinode.1 + vec1.1);
             }
 
-            let mut antinode = (antenna2.0 as i32, antenna2.1 as i32);
+            let mut antinode = *antenna2;
             loop {
-                if antinode.0 >= 0
-                    && antinode.0 < grid.rows as i32
-                    && antinode.1 >= 0
-                    && antinode.1 < grid.columns as i32
-                {
+                if grid.get(antinode.0, antinode.1).is_some() {
                     antinodes.insert(antinode);
                 } else {
                     break;

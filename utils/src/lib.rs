@@ -3,8 +3,8 @@ use std::ops::Range;
 #[derive(Debug)]
 pub struct Grid<T> {
     pub grid: Vec<T>,
-    pub rows: usize,
-    pub columns: usize,
+    pub rows: i32,
+    pub columns: i32,
 }
 
 pub enum DiagonalDirection {
@@ -18,55 +18,50 @@ impl<T> Grid<T>
 where
     T: Copy + Clone,
 {
-    /// Retrieves an element from the grid at the specified row and column indices.
-    ///
-    /// # Arguments
-    ///
-    /// * `row` - The row index of the element to retrieve, which must be less than `self.rows`.
-    /// * `col` - The column index of the element to retrieve, which must be less than `self.columns`.
-    ///
-    /// # Returns
-    ///
-    /// Returns `Some(T)` containing the element if the specified indices are within bounds,
-    /// otherwise returns `None` if the indices are out of bounds.
-    pub fn get(&self, row: usize, col: usize) -> Option<T> {
-        if col < self.columns && row < self.rows {
-            self.grid.get(row * self.columns + col).copied()
+    pub fn get(&self, row: i32, col: i32) -> Option<T> {
+        if row >= 0 && col >= 0 && col < self.columns && row < self.rows {
+            self.grid
+                .get(row as usize * self.columns as usize + col as usize)
+                .copied()
         } else {
             None
         }
     }
 
-    pub fn set(&mut self, row: usize, col: usize, value: T) {
-        if col < self.columns && row < self.rows {
-            self.grid[row * self.columns + col] = value;
+    pub fn set(&mut self, row: i32, col: i32, value: T) -> Result<(), &'static str> {
+        if row >= 0 && col >= 0 && col < self.columns && row < self.rows {
+            self.grid[row as usize * self.columns as usize + col as usize] = value;
+            Ok(())
+        } else {
+            Err("out of bounds")
         }
     }
 
-    pub fn row(&self, row: usize) -> Option<Vec<T>> {
-        if row < self.rows {
-            let start = row * self.columns;
-            let end = start + self.columns;
+    pub fn row(&self, row: i32) -> Option<Vec<T>> {
+        if row >= 0 && row < self.rows {
+            let start = (row * self.columns) as usize;
+            let end = start + self.columns as usize;
             Some(self.grid[start..end].to_vec())
         } else {
             None
         }
     }
 
-    pub fn row_slice(&self, row: usize, range: Range<usize>) -> Option<Vec<T>> {
-        if row < self.rows && range.end <= self.columns {
-            let start = row * self.columns;
-            let end = start + self.columns;
+    pub fn row_slice(&self, row: i32, range: Range<i32>) -> Option<Vec<T>> {
+        if row >= 0 && row < self.rows && range.start >= 0 && range.end <= self.columns {
+            let start = (row * self.columns) as usize;
+            let end = start + self.columns as usize;
             let slice = &self.grid[start..end];
 
+            let range = range.start as usize..range.end as usize;
             Some(slice[range].to_vec())
         } else {
             None
         }
     }
 
-    pub fn col(&self, col: usize) -> Option<Vec<T>> {
-        if col < self.columns {
+    pub fn col(&self, col: i32) -> Option<Vec<T>> {
+        if col >= 0 && col < self.columns {
             Some(
                 (0..self.rows)
                     .map(|row| self.get(row, col).expect("shouldn't go outbound"))
@@ -77,8 +72,8 @@ where
         }
     }
 
-    pub fn col_slice(&self, col: usize, range: Range<usize>) -> Option<Vec<T>> {
-        if col < self.columns && range.end <= self.rows {
+    pub fn col_slice(&self, col: i32, range: Range<i32>) -> Option<Vec<T>> {
+        if col >= 0 && col < self.columns && range.start >= 0 && range.end <= self.rows {
             Some(
                 (range)
                     .map(|row| self.get(row, col).expect("shouldn't go outbound"))
@@ -91,13 +86,14 @@ where
 
     pub fn diagonal_from(
         &self,
-        row: usize,
-        col: usize,
+        row: i32,
+        col: i32,
         direction: DiagonalDirection,
     ) -> Option<Vec<T>> {
         // lazy bound checking: rely on self.get to check whether we are out of bounds
         match direction {
             DiagonalDirection::TopLeft(len) => {
+                let len = len as i32;
                 if len == 0 || row + 1 < len || col + 1 < len {
                     return None;
                 }
@@ -113,6 +109,7 @@ where
                 )
             }
             DiagonalDirection::TopRight(len) => {
+                let len = len as i32;
                 if len == 0 || row + 1 < len {
                     return None;
                 }
@@ -125,6 +122,7 @@ where
                 )
             }
             DiagonalDirection::BottomLeft(len) => {
+                let len = len as i32;
                 if len == 0 || col + 1 < len {
                     return None;
                 }
@@ -137,6 +135,7 @@ where
                 )
             }
             DiagonalDirection::BottomRight(len) => {
+                let len = len as i32;
                 let (row_range, col_range) = (row..row + len, col..col + len);
                 Some(
                     (row_range)
@@ -148,7 +147,7 @@ where
         }
     }
 
-    pub fn position_iter(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
+    pub fn position_iter(&self) -> impl Iterator<Item = (i32, i32)> + '_ {
         (0..self.rows).flat_map(|row| (0..self.columns).map(move |col| (row, col)))
     }
 }
