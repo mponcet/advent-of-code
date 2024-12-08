@@ -14,6 +14,26 @@ pub enum DiagonalDirection {
     BottomRight(usize),
 }
 
+impl Grid<char> {
+    pub fn parse(input: &str) -> Self {
+        let mut columns = 0;
+        let grid = input
+            .lines()
+            .flat_map(|line| {
+                columns = line.len() as i32;
+                line.chars()
+            })
+            .collect::<Vec<_>>();
+        let rows = grid.len() as i32 / columns;
+
+        Grid {
+            grid,
+            rows,
+            columns,
+        }
+    }
+}
+
 impl<T> Grid<T>
 where
     T: Copy + Clone,

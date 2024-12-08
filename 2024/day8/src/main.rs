@@ -9,21 +9,7 @@ struct Game {
 }
 
 fn parse(input: &str) -> Game {
-    let mut columns = 0;
-    let grid = input
-        .lines()
-        .flat_map(|line| {
-            columns = line.len() as i32;
-            line.chars()
-        })
-        .collect::<Vec<_>>();
-    let rows = grid.len() as i32 / columns;
-
-    let grid = Grid {
-        grid,
-        rows,
-        columns,
-    };
+    let grid = Grid::parse(input);
 
     let antennas = grid
         .position_iter()
