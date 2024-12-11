@@ -34,6 +34,26 @@ impl Grid<char> {
     }
 }
 
+impl Grid<u8> {
+    pub fn parse(input: &str) -> Self {
+        let mut columns = 0;
+        let grid = input
+            .lines()
+            .flat_map(|line| {
+                columns = line.len() as i32;
+                line.bytes() //.map(|b| b - b'0')
+            })
+            .collect::<Vec<_>>();
+        let rows = grid.len() as i32 / columns;
+
+        Grid {
+            grid,
+            rows,
+            columns,
+        }
+    }
+}
+
 impl<T> Grid<T>
 where
     T: Copy + Clone,
@@ -169,6 +189,17 @@ where
 
     pub fn position_iter(&self) -> impl Iterator<Item = (i32, i32)> + '_ {
         (0..self.rows).flat_map(|row| (0..self.columns).map(move |col| (row, col)))
+    }
+
+    pub fn neighbors_cross(&self, row: i32, col: i32) -> impl Iterator<Item = (i32, i32)> + '_ {
+        [
+            (row + 1, col),
+            (row, col - 1),
+            (row - 1, col),
+            (row, col + 1),
+        ]
+        .into_iter()
+        .filter(|&(row, col)| row >= 0 && row < self.rows && col >= 0 && col < self.columns)
     }
 }
 
