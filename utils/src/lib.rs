@@ -54,6 +54,19 @@ impl Grid<u8> {
     }
 }
 
+impl<T: Copy + Clone + std::fmt::Display> std::fmt::Display for Grid<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row in 0..self.rows {
+            for col in 0..self.columns {
+                write!(f, "{}", self.get(row, col).unwrap())?;
+            }
+            writeln!(f)?;
+        }
+
+        Ok(())
+    }
+}
+
 impl<T> Grid<T>
 where
     T: Copy + Clone,
