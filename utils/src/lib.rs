@@ -200,11 +200,11 @@ where
         }
     }
 
-    pub fn position_iter(&self) -> impl Iterator<Item = (i32, i32)> + '_ {
+    pub fn position_iter(&self) -> impl Iterator<Item = (i32, i32)> {
         (0..self.rows).flat_map(|row| (0..self.columns).map(move |col| (row, col)))
     }
 
-    pub fn neighbors_cross(&self, row: i32, col: i32) -> impl Iterator<Item = (i32, i32)> + '_ {
+    pub fn neighbors_cross(&self, row: i32, col: i32) -> impl Iterator<Item = (i32, i32)> {
         [
             (row + 1, col),
             (row, col - 1),
